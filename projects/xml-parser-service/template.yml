@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: ETL For  XML service
+
+Parameters:
+  env:
+    Type: String
+    Default: staging
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  app:
+    Type: String
+    Default: xml-parser-service
+
+Mappings:
+  EnviromentSettings:
+    dev:
+      LogLevel: DEBUG
+      PROCESSED_DATA_BUCKET: "test-emile-dev"
+      BUCKET: "test-emile-dev"
+
+    staging:
+      LogLevel: DEBUG
+      PROCESSED_DATA_BUCKET: ""
+      BUCKET: ""
+
+    prod:
+      LogLevel: DEBUG
+      PROCESSED_DATA_BUCKET: ""
+      BUCKET: ""
+
+
+
+Globals:
+  Function:
+    Layers:
+      - !Ref XmlParserRequirementsLayer
+    Tags:
+      env: !Ref env
+      service: !Ref app
+    Environment:
+      Variables:
+        LOG_LEVEL: !FindInMap [ EnviromentSettings, !Ref env, LogLevel ]
+        ENV: !Ref env
+        PROCESSED_DATA_BUCKET: !FindInMap [ EnviromentSettings, !Ref env, PROCESSED_DATA_BUCKET ]
+
+Resources:
+  ApplicationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref env, "xml_parser_service"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+                - 'apigateway.amazonaws.com'
+                - 'states.amazonaws.com'
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  LambdaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !FindInMap [ EnviromentSettings, !Ref env, BUCKET ]
+      PublicAccessBlockConfiguration:
+        RestrictPublicBuckets: true
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt XmlParserService.Arn
+            Filter:
+              S3Key:
+                Rules:
+                - Name: suffix
+                  Value: .xml
+
+  XmlParserRequirementsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Join ["-", [!Ref env, "xml-parser-service-requirements"]]
+      ContentUri: layers/
+      CompatibleRuntimes:
+        - python3.9
+
+  XmlParserService:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      FunctionName: !Join ["_", [!Ref env, !Ref app, "xml_parser_service"]]
+      Handler: xml_parser_service/lambda.handler
+      Runtime: python3.9
+      CodeUri: src/
+      Description: "xml parser service lambda"
+      MemorySize: 512
+      Timeout: 800
+      Role: !GetAtt ApplicationRole.Arn
