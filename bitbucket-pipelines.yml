@@ -1,0 +1,67 @@
+image: python:3.11.1
+
+definitions:
+  steps:
+    - step: &lint_xml_parser_service
+        name: lint_xml_parser_service
+        size: 2x
+        condition:
+          changesets:
+            includePaths:
+              - "projects/xml-parser-service/**"
+        script:
+          - cd $BITBUCKET_CLONE_DIR/projects/xml-parser-service
+          - export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+          - export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+          - export AWS_DEFAULT_REGION=$AWS_REGION
+          - pip install poetry==1.3.2
+          - pip install awscli
+          - poetry config virtualenvs.create false
+          - poetry install
+          - $BITBUCKET_CLONE_DIR/projects/xml-parser-service/scripts/lint.sh --no-format
+    - step: &test_xml_parser_service
+        name: test_xml_parser_service
+        size: 2x
+        condition:
+          changesets:
+            includePaths:
+              - "projects/xml-parser-service/**"
+        script:
+          - cd $BITBUCKET_CLONE_DIR/projects/xml-parser-service
+          - export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+          - export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+          - export AWS_DEFAULT_REGION=$AWS_REGION
+          - pip install poetry==1.3.2
+          - pip install awscli
+          - poetry config virtualenvs.create false
+          - poetry install
+          - $BITBUCKET_CLONE_DIR/projects/xml-parser-service/scripts/test.sh
+
+
+    - step: &publish_ecr_xml_parser_service
+        name: publish_ecr_xml_parser_service
+        caches:
+          - pip
+        script:
+          - cd $BITBUCKET_CLONE_DIR/projects/xml-parser-service
+          - pip install awscli
+          - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 12345566.dkr.ecr.eu-west-1.amazonaws.com
+          - $BITBUCKET_CLONE_DIR/projects/xml-parser-service/scripts/build_multiplatform.sh
+        services:
+          - docker
+
+
+pipelines:
+  pull-requests:
+    '**':
+      - parallel:
+          - step: *lint_xml_parser_service
+          - step: *test_xml_parser_service
+
+  branches:
+    release/*:
+      - parallel:
+        - step: *lint_xml_parser_service
+        - step: *test_xml_parser_service
+        - step: *publish_ecr_xml_parser_service
+
