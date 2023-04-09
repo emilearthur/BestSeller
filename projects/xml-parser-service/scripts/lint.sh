@@ -18,12 +18,12 @@ set -e
 
 if [ $FORMAT = true ]; then
   echo "*** Running black ***"
-  black "./src/xml_parser_service/" "./tests"
+  poetry run black "./xml_parser_service" "./tests"
 fi
 
 echo "*** Running mypy ***"
-mypy --show-absolute-path "./src/xml_parser_service/" --allow-untyped-decorators --allow-subclassing-any
+poetry run mypy --show-absolute-path "./xml_parser_service" --allow-untyped-decorators --allow-subclassing-any
 
 echo "*** Running pylint ***"
-find . -type f -name "*.py" -not -path "./.venv/*" | xargs pylint  --msg-template='{abspath}:{line}:{column}: {msg_id}: {msg} ({symbol})'
+find . -type f -name "*.py" -not -path "./.venv/*" | xargs poetry run pylint  --msg-template='{abspath}:{line}:{column}: {msg_id}: {msg} ({symbol})'
 popd

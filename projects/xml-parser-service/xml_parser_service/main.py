@@ -1,14 +1,15 @@
+import argparse
+import ast
 import json
 import logging
 import os
 import sys
 import urllib.parse
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
+from xml_parser_service import helpers, s3_helper
 from xml_parser_service.constant import APPLICATIONS, PROCESSED_DATA_BUCKET
 from xml_parser_service.exceptions import format_exception
-from xml_parser_service import helpers
-from xml_parser_service import s3_helper
 from xml_parser_service.models import ProductData
 
 logger = logging.getLogger("xml_parser_service")
@@ -16,22 +17,30 @@ logger = logging.getLogger("xml_parser_service")
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 
 
-def main_handler(event: Dict[str, Any]) -> Dict[str, Union[str, int]]:
-    errors: List[Exception] = []
+def main(events: Dict[str, Any]) -> None:
+    logger.info(
+        "Start ETL to parse XML data",
+        extra={
+            "event": events,
+        },
+    )
+
     processed_data: List[Dict[str, str]] = []
 
-    if "Records" in event:
-        records = event["Records"]
+    if "Records" in events:
+        records = events["Records"]
 
     for record in records:
         try:
             logger.info(
-                "request received", extra={"request": json.dumps(record, default=str)}
+                "request received",
+                extra={"request": json.dumps(record, default=str)},
             )
             bucket = record["s3"]["bucket"]["name"]
             key = urllib.parse.unquote_plus(
                 record["s3"]["object"]["key"], encoding="utf-8"
             )
+            print(bucket, key)
 
             logger.info("Data processing started")
 
@@ -60,41 +69,32 @@ def main_handler(event: Dict[str, Any]) -> Dict[str, Union[str, int]]:
             s3_helper.upload_to_s3(
                 processed_data,
                 PROCESSED_DATA_BUCKET,
-                f"processed_{key}".replace(".xml", ".json")
+                f"processed_{key}".replace(".xml", ".json"),
             )
 
             logger.info("Data processing Done")
 
         except (KeyError, AttributeError, TypeError) as err:
-            logger.error(err, exc_info=True)
-            errors.append(err)
-
-    if errors:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"ETL Errored": format_exception(errors[0])}),
-        }
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps({"ETL Done": True}),
-    }
+            logger.info(
+                "Error Getting Contact on XCally",
+                extra={"error": format_exception(err)},
+                exc_info=True,
+            )
 
 
-root_logger = logging.getLogger("")
-if not root_logger.handlers:
-    root_logger.addHandler(logging.StreamHandler(sys.stdout))
+if __name__ == "__main__":
+    root_logger = logging.getLogger("")
+    if not root_logger.handlers:
+        root_logger.addHandler(logging.StreamHandler(sys.stdout))
 
-for name in APPLICATIONS:
-    logging.getLogger(name).setLevel(LOG_LEVEL)
+    for name in APPLICATIONS:
+        logging.getLogger(name).setLevel(LOG_LEVEL)
 
+    argparser = argparse.ArgumentParser(description="Args for Interaction Service")
+    argparser.add_argument("-e", "--events", default=os.environ.get("EVENTS"), type=str)
 
-# pylint: disable=unused-argument
-def handler(event: Dict[str, Any], context: Any) -> Dict[str, Union[str, int]]:
-    logger.debug(
-        "Start ETL to parse XML data",
-        extra={
-            "event": event,
-        },
-    )
-    return main_handler(event)
+    args = argparser.parse_args()
+    if (args.events is None) or (args.events == ""):
+        logger.info("Event can either be parsed or as an environment variable.")
+    else:
+        main(events=ast.literal_eval(args.events))

@@ -5,8 +5,7 @@ pushd "$SCRIPT_DIR/.."
 source deactivate 2>/dev/null
 set -e
 export ENV=test
-export PYTHONPATH="./src"
-coverage run --source="./src/xml_parser_service" -m pytest "./tests" "$@"
-coverage html
-coverage report -m
+poetry run coverage run --source="./xml_parser_service" -m pytest "./tests" "$@"
+poetry run coverage html
+poetry run coverage report -m
 popd

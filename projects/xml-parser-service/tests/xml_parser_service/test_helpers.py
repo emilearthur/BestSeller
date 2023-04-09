@@ -1,29 +1,22 @@
-from typing import Iterator, Dict, List
+from typing import Dict, Iterator, List
 
-import boto3
-from mypy_boto3_s3.client import S3Client
 import bs4
+from mypy_boto3_s3.client import S3Client
 
-from xml_parser_service.s3_helper import get_data_from_s3
 from xml_parser_service.helpers import (
-    load_xml,
     get_field_values,
     get_product_images,
     get_product_prices,
+    load_xml,
 )
-
-boto3.setup_default_session(profile_name="dev")
-
-
-def s3_client() -> S3Client:
-    return boto3.client(service_name="s3", region_name="eu-west-1")
+from xml_parser_service.s3_helper import get_data_from_s3
 
 
-def test_load_xml() -> None:
+def test_load_xml(s3_client: S3Client) -> None:
     data = get_data_from_s3(
         "test-emile-dev",
         "sample.xml",
-        s3_client(),
+        s3_client,
     )
     assert isinstance(data, Iterator)
 
@@ -38,11 +31,11 @@ def test_load_xml() -> None:
     assert items[0].get("id") == "2445456"
 
 
-def test_get_field_values() -> None:
+def test_get_field_values(s3_client: S3Client) -> None:
     data = get_data_from_s3(
         "test-emile-dev",
         "sample.xml",
-        s3_client(),
+        s3_client,
     )
     datum = next(data)
     items = load_xml(datum)
@@ -54,11 +47,11 @@ def test_get_field_values() -> None:
     assert product_category == "Jeans"
 
 
-def test_get_field_values_to_text() -> None:
+def test_get_field_values_to_text(s3_client: S3Client) -> None:
     data = get_data_from_s3(
         "test-emile-dev",
         "sample.xml",
-        s3_client(),
+        s3_client,
     )
     datum = next(data)
     items = load_xml(datum)
@@ -69,11 +62,11 @@ def test_get_field_values_to_text() -> None:
     assert product_category == "Jeans"
 
 
-def test_get_field_values_none() -> None:
+def test_get_field_values_none(s3_client: S3Client) -> None:
     data = get_data_from_s3(
         "test-emile-dev",
         "sample.xml",
-        s3_client(),
+        s3_client,
     )
     datum = next(data)
     items = load_xml(datum)
@@ -82,11 +75,11 @@ def test_get_field_values_none() -> None:
     assert product_category_tag == ""
 
 
-def test_get_product_images() -> None:
+def test_get_product_images(s3_client: S3Client) -> None:
     data = get_data_from_s3(
         "test-emile-dev",
         "sample.xml",
-        s3_client(),
+        s3_client,
     )
     datum = next(data)
     items = load_xml(datum)
@@ -99,11 +92,11 @@ def test_get_product_images() -> None:
     )
 
 
-def test_get_product_prices() -> None:
+def test_get_product_prices(s3_client: S3Client) -> None:
     data = get_data_from_s3(
         "test-emile-dev",
         "sample.xml",
-        s3_client(),
+        s3_client,
     )
     datum = next(data)
     items = load_xml(datum)

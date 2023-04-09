@@ -8,8 +8,6 @@ REGION_NAME: str = os.environ.get("REGION_NAME", "eu-west-1")
 
 PROCESSED_DATA_BUCKET = os.environ.get("PROCESSED_DATA_BUCKET", "test-emile-dev")
 
-boto3.setup_default_session(profile_name="dev")
-
 
 @functools.cache
 def s3_client() -> S3Client:

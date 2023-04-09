@@ -1,9 +1,10 @@
 import json
 import logging
 from collections.abc import Iterator
-from typing import Tuple, Dict, List
+from typing import Dict, List, Tuple
 
 from mypy_boto3_s3.client import S3Client
+
 from xml_parser_service.constant import s3_client
 
 logger = logging.getLogger("s3_helper")

@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "xml-parser-service"
+version = "0.1.0"
+description = ""
+authors = ["EBAF <frederickauthur@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pydantic = "^1.10.5"
+pandas = "^1.5.3"
+boto3-stubs = {extras = ["essential"], version = "^1.26.86"}
+boto3 = "^1.26.89"
+beautifulsoup4 = "^4.12.2"
+lxml = "^4.9.2"
+mypy-boto3-s3 = "^1.26.104"
+
+[tool.poetry.dev-dependencies]
+boto3 = "^1.26.89"
+pytest = "^7.2.1"
+black = "^23.1.0"
+mypy = "^1.0.1"
+coverage = "^7.2.1"
+pytest-asyncio = "^0.20.3"
+watchfiles = "^0.18.1"
+pylint = "^2.16.2"
+
+[tool.poetry.group.dev-dependencies.dependencies]
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["xml_parser_service"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+exclude_lines = ["pass", "pragma: no cover", "\\.\\.\\."]
+omit = ["xml_parser_service/main.py", "xml_parser_service/models.py"]
+
+[tool.pylint.basic]
+# Allow shorter and longer variable names than the default.
+argument-rgx = "[a-z_][a-z0-9_]*$"
+attr-rgx = "[a-z_][a-z0-9_]*$"
+variable-rgx = "[a-z_][a-z0-9_]*$"
+max-line-length=140
+
+[tool.pylint.messages_control]
+disable = ["R0903", "R0801", "W1203", "C0414", "C0116", "C0115", "E0601", "R0913", "C0114"]
+extension-pkg-whitelist = "pydantic"
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+warn_no_return = false
+implicit_reexport = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
