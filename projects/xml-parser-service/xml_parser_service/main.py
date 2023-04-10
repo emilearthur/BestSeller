@@ -7,6 +7,7 @@ import sys
 import urllib.parse
 from typing import Any, Dict, List
 
+from pydantic import ValidationError
 from xml_parser_service import helpers, s3_helper
 from xml_parser_service.constant import APPLICATIONS, PROCESSED_DATA_BUCKET
 from xml_parser_service.exceptions import format_exception
@@ -74,7 +75,7 @@ def main(events: Dict[str, Any]) -> None:
 
             logger.info("Data processing Done")
 
-        except (KeyError, AttributeError, TypeError) as err:
+        except (KeyError, AttributeError, TypeError, ValidationError) as err:
             logger.info(
                 "Error Getting Contact on XCally",
                 extra={"error": format_exception(err)},
