@@ -1,0 +1,13 @@
+[run]
+branch = true
+source = src/xml_parser_service
+
+
+[report]
+show_missing = true
+fail_under = 100
+exclude_lines =
+    pass
+    pragma: no cover
+    \\.\\.\\.
+omit = src/xml_parser_service/lambda.py

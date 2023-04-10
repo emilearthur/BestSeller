@@ -1,0 +1,4 @@
+beautifulsoup4==4.11.1
+pydantic==1.10.6
+mypy-boto3-s3==1.26.62
+lxml==4.9.2

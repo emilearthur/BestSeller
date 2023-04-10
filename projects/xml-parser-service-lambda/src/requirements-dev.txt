@@ -1,0 +1,12 @@
+boto3==1.26.89
+pytest==7.2.1
+black==23.1.0
+mypy==1.0.1
+coverage==7.2.1
+pytest-asyncio==0.20.3
+watchfiles==0.18.1
+pylint==2.16.2
+beautifulsoup4==4.11.1
+pydantic==1.10.6
+mypy-boto3-s3==1.26.62
+lxml==4.9.2
