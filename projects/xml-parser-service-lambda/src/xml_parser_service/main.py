@@ -3,6 +3,7 @@ import logging
 import urllib.parse
 from typing import Any, Dict, List, Union
 
+from pydantic import ValidationError
 from xml_parser_service.constant import PROCESSED_DATA_BUCKET
 from xml_parser_service.exceptions import format_exception
 from xml_parser_service import helpers
@@ -61,7 +62,7 @@ def main_handler(event: Dict[str, Any]) -> Dict[str, Union[str, int]]:
 
             logger.info("Data processing Done")
 
-        except (KeyError, AttributeError, TypeError) as err:
+        except (KeyError, AttributeError, TypeError, ValidationError) as err:
             logger.error(err, exc_info=True)
             errors.append(err)
 
